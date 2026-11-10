@@ -15,6 +15,7 @@ button{cursor:pointer}
 .topbar-inner{width:min(1240px,calc(100% - 40px));margin:auto;display:flex;align-items:center;gap:30px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:750;font-size:20px;letter-spacing:-.6px;color:#263849;text-decoration:none}
 .brand-mark{height:34px;width:34px;border-radius:10px;background:var(--blue-800);color:#fff;display:grid;place-items:center;font-size:17px}
+.brand-logo{height:34px;width:34px;border-radius:10px;display:block;object-fit:cover}
 .nav{display:flex;align-items:center;gap:5px;margin-left:auto}
 .nav button{border:0;background:transparent;color:#64748b;padding:10px 14px;border-radius:9px;font-size:14px}
 .nav button.active{background:var(--blue-100);color:var(--blue-900);font-weight:650}
