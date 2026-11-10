@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Corrigeo — Récapitulatif et export</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="index.html" aria-label="Corrigeo, accueil"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7.5A8 8 0 1 0 20 14"/><path d="m14 11 3 3 5-6"/></svg></span><span class="brand-name">corri<span>geo</span></span></a>
+      <nav class="main-nav" aria-label="Navigation principale"><a href="index.html">Nouveau document</a><a class="active" href="documents.html">En cours</a></nav>
+      <span class="demo-label"><i class="demo-dot"></i> Moteur local</span>
+    </div>
+  </header>
+
+  <main id="contenu" class="container" data-result-page>
+    <div class="page-heading">
+      <div>
+        <h1>Récapitulatif et export</h1>
+        <p data-result-summary>Seules les corrections que vous avez retenues seront intégrées au document Word final.</p>
+      </div>
+      <div class="file-chip"><span class="file-icon">DOCX</span><strong data-file-name>document.docx</strong></div>
+    </div>
+
+    <section class="export-panel" style="margin-top: 0; margin-bottom: 18px;">
+      <div>
+        <h3>Prêt à générer le document corrigé</h3>
+        <p>Chaque emplacement est revérifié avant application. Votre fichier d’origine reste intact.</p>
+      </div>
+      <div class="export-actions">
+        <a class="button button-secondary" href="revision.html">← Retour à la relecture</a>
+        <button class="button button-primary" type="button" data-export-docx>Télécharger le .docx corrigé</button>
+      </div>
+    </section>
+
+    <section class="final-stats" aria-label="Résumé des décisions">
+      <div class="final-stat good"><strong data-count-chosen>0</strong><span>Corrections retenues (intégrées)</span></div>
+      <div class="final-stat neutral"><strong data-count-kept>0</strong><span>Phrases conservées</span></div>
+      <div class="final-stat wait"><strong data-count-pending>0</strong><span>Non vérifiées (inchangées)</span></div>
+    </section>
+
+    <section class="final-section" data-result-section>
+      <div class="final-section-head"><h2>Corrections retenues</h2><span>Intégrées au document exporté</span></div>
+      <div class="final-item-list" data-chosen-list></div>
+    </section>
+
+    <section class="final-section" data-result-section>
+      <div class="final-section-head"><h2>Phrases conservées</h2><span>Votre texte d’origine est gardé</span></div>
+      <div class="final-item-list" data-kept-list></div>
+    </section>
+
+    <section class="final-section" data-result-section>
+      <div class="final-section-head"><h2>Non vérifiées</h2><span>Laissées telles quelles</span></div>
+      <div class="final-item-list" data-pending-list></div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container footer-inner"><span><strong>Corrigeo</strong> · Relecture documentaire</span><span>Traitement local</span></div></footer>
+  <script src="assets/app.js"></script>
+</body>
+</html>

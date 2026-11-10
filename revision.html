@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Corrigeo — Relecture</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="index.html" aria-label="Corrigeo, accueil"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7.5A8 8 0 1 0 20 14"/><path d="m14 11 3 3 5-6"/></svg></span><span class="brand-name">corri<span>geo</span></span></a>
+      <nav class="main-nav" aria-label="Navigation principale"><a href="index.html">Nouveau document</a><a class="active" href="documents.html">En cours</a></nav>
+      <span class="demo-label"><i class="demo-dot"></i> Moteur local</span>
+    </div>
+  </header>
+
+  <main id="contenu" class="container" data-review-page>
+    <div class="page-heading">
+      <div>
+        <h1>Relecture des propositions</h1>
+        <p data-review-subtitle>Comparez chaque passage et choisissez de retenir la correction ou de garder votre texte.</p>
+      </div>
+      <div class="file-chip"><span class="file-icon">DOCX</span><strong data-file-name>document.docx</strong></div>
+    </div>
+
+    <section class="review-toolbar" aria-label="Outils de relecture">
+      <div class="toolbar-top">
+        <div class="toolbar-progress">
+          <div class="progress-track"><div class="progress-fill" data-review-fill></div></div>
+          <span class="toolbar-counts"><strong data-review-count>0/0</strong> · <span data-review-chosen>0 retenue</span> · <span data-review-kept>0 gardée</span> · <span data-review-pending>0 à vérifier</span></span>
+        </div>
+        <div class="toolbar-actions">
+          <span class="kbd-hint" title="Raccourcis clavier sur la proposition active"><kbd>A</kbd> accepter <kbd>G</kbd> garder <kbd>Z</kbd> annuler</span>
+          <button class="button button-ghost" type="button" data-batch-punct hidden>Accepter la ponctuation</button>
+          <a class="button button-primary" href="resultat.html">Terminer et exporter →</a>
+        </div>
+      </div>
+      <div class="toolbar-filters" data-filter-bar style="margin-top: 9px;"></div>
+    </section>
+
+    <section class="correction-list" data-correction-list aria-live="polite"></section>
+
+    <section class="review-footer">
+      <p><strong>Les propositions non vérifiées restent inchangées.</strong> Vous pouvez exporter votre document à tout moment.</p>
+      <a class="button button-primary" href="resultat.html">Voir le récapitulatif et exporter →</a>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container footer-inner"><span><strong>Corrigeo</strong> · Relecture documentaire</span><span>Traitement local</span></div></footer>
+  <script src="assets/app.js"></script>
+</body>
+</html>

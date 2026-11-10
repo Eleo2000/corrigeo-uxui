@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corrigeo — Relecture de documents .docx</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<header class="topbar">
+ <div class="topbar-inner">
+  <a class="brand" href="#" data-go="documents" aria-label="Corrigeo accueil"><span class="brand-mark">↻</span><span>corri<span style="font-weight:450;color:#6b7b88">geo</span></span></a>
+  <nav class="nav" aria-label="Navigation principale">
+   <button class="active" data-page="documents">Mes documents</button>
+   <button data-page="upload">Nouveau document</button>
+   <button data-page="review">Relecture</button>
+  </nav>
+  <div class="service"><span class="dot" id="engineDot"></span><span id="engineLabel">Moteur local</span></div>
+ </div>
+</header>
+<main>
+ <!-- DOCUMENTS -->
+ <section class="page active" id="page-documents">
+  <div class="page-head">
+   <div><div class="eyebrow">Votre espace de travail</div><h1>Mes documents</h1><p class="lead">Retrouvez votre document en cours et reprenez votre relecture quand vous le souhaitez.</p></div>
+   <button class="btn btn-primary" data-go="upload">＋ Nouveau document</button>
+  </div>
+  <div class="stats" id="docStats" hidden>
+   <div class="card stat"><div class="stat-label">Propositions à vérifier</div><div class="stat-value" id="pendingStat">0</div><div class="stat-note">Sur le document en cours</div></div>
+   <div class="card stat"><div class="stat-label">Corrections acceptées</div><div class="stat-value" id="chosenStat">0</div><div class="stat-note">Seront appliquées à l'export</div></div>
+   <div class="card stat"><div class="stat-label">Passages conservés</div><div class="stat-value" id="keptStat">0</div><div class="stat-note">Votre texte reste inchangé</div></div>
+  </div>
+  <div class="section-title"><h2>Document en cours</h2></div>
+  <div class="card doc-list" id="docList"></div>
+  <div class="card empty" id="docEmpty" hidden>
+   <div class="empty-icon">⇧</div>
+   <h3>Aucun document en cours</h3>
+   <p>Importez un fichier .docx pour lancer une analyse. Corrigeo vous proposera des corrections que vous pourrez accepter ou refuser une par une.</p>
+   <button class="btn btn-primary" data-go="upload">Importer un document</button>
+  </div>
+  <div class="info"><strong>À savoir :</strong> les sessions sont conservées temporairement en mémoire sur ce poste. Elles peuvent être perdues après expiration ou redémarrage du service. Téléchargez votre document corrigé pour conserver le résultat.</div>
+ </section>
+
+ <!-- UPLOAD -->
+ <section class="page" id="page-upload">
+  <div class="upload-wrap">
+   <div class="page-head"><div><div class="eyebrow">Nouvelle relecture</div><h1>Ouvrir un document à relire</h1><p class="lead">Importez votre fichier Word. Corrigeo analysera le texte et vous proposera des corrections traçables.</p></div></div>
+   <div class="card upload-card">
+    <div class="dropzone" id="dropzone">
+     <div class="upload-icon">⇧</div>
+     <strong>Glissez votre fichier .docx ici</strong>
+     <p>ou sélectionnez un document depuis votre ordinateur</p>
+     <button class="btn btn-secondary" id="browseBtn">Parcourir les fichiers</button>
+     <input type="file" id="fileInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+     <div class="file-selected" id="fileSelected"></div>
+    </div>
+    <div class="filter-title" style="margin:20px 0 8px">MODE DE CORRECTION</div>
+    <div class="mode-list">
+     <label class="mode-card"><input type="radio" name="mode" value="guided" checked>
+      <div><strong>Relecture guidée</strong><span>Vous vérifiez chaque proposition avant application — recommandé pour un mémoire.</span></div>
+     </label>
+     <label class="mode-card"><input type="radio" name="mode" value="auto">
+      <div><strong>Correction automatique</strong><span>Toutes les suggestions du moteur sont appliquées d'un coup. Vous pourrez toujours les revoir en relecture et ré-exporter.</span></div>
+     </label>
+    </div>
+    <div class="upload-actions"><span class="fineprint">Format .docx · 25 Mo maximum</span><button class="btn btn-primary" id="analyzeBtn" disabled>Lancer l'analyse →</button></div>
+    <div class="analysis" id="analysis">
+     <div class="analysis-line"><strong id="analysisTitle">Validation du document…</strong><span id="analysisPercent"></span></div>
+     <div class="progress"><span id="analysisProgress" style="width:0%"></span></div>
+     <p class="fineprint" id="analysisHint" style="margin:9px 0 0">Vérification du fichier sélectionné.</p>
+    </div>
+    <div class="info"><strong>Traitement local :</strong> le document est analysé par le moteur LanguageTool local. En mode guidé, aucune correction n'est appliquée sans votre accord.</div>
+   </div>
+  </div>
+ </section>
+
+ <!-- REVIEW -->
+ <section class="page" id="page-review">
+  <div class="page-head review-head">
+   <div><div class="eyebrow">Validation</div><h1>Relecture des propositions</h1><p class="lead">Examinez chaque suggestion et choisissez de l'accepter ou de conserver votre texte.</p></div>
+   <div class="review-file"><span class="file-icon" style="width:30px;height:30px">DOCX</span><strong id="reviewFilename">document.docx</strong></div>
+  </div>
+  <div class="card review-summary">
+   <div class="summary-top">
+    <div><strong id="reviewProgressLabel">0 / 0</strong><span class="summary-numbers"> · <span id="acceptedCount">0</span> acceptées · <span id="keptCount">0</span> conservées · <strong id="pendingCount">0</strong> à vérifier</span></div>
+    <div class="summary-actions"><button class="btn btn-secondary" id="bulkBtn">Tout accepter dans cette vue</button><button class="btn btn-primary" id="exportBtn">Terminer et exporter →</button></div>
+   </div>
+   <div class="summary-progress"><span id="acceptedBar" style="background:#39966a;width:0%"></span><span id="keptBar" style="background:#9bb2c5;width:0%"></span><span id="pendingBar" style="background:#e9edf1;width:100%"></span></div>
+   <div class="summary-bottom"><span class="fineprint">Raccourcis : A = accepter · G = garder · Z = annuler · ← → = naviguer</span><span class="fineprint">Les propositions « à vérifier » ne sont jamais appliquées.</span></div>
+  </div>
+  <div class="review-layout">
+   <aside class="card filter-panel">
+    <div class="filter-title">AFFICHER</div>
+    <div class="filter-list" id="statusFilters">
+     <button class="filter-btn active" data-status="all">Toutes <small id="filterAll">0</small></button>
+     <button class="filter-btn" data-status="pending">À vérifier <small id="filterPending">0</small></button>
+     <button class="filter-btn" data-status="chosen">Acceptées <small id="filterChosen">0</small></button>
+     <button class="filter-btn" data-status="kept">Conservées <small id="filterKept">0</small></button>
+    </div>
+    <div class="filter-title">CATÉGORIES</div>
+    <div class="filter-list" id="categoryFilters">
+     <button class="filter-btn active" data-category="all">Toutes les catégories</button>
+    </div>
+   </aside>
+   <div>
+    <article class="card proposal" id="proposalCard"></article>
+    <div class="proposal-nav"><button class="btn btn-quiet" id="prevBtn">← Précédente</button><span class="fineprint" id="navPosition"></span><button class="btn btn-quiet" id="nextBtn">Suivante →</button></div>
+   </div>
+  </div>
+ </section>
+
+ <!-- RESULT -->
+ <section class="page" id="page-result">
+  <div class="page-head"><div><div class="eyebrow">Exportation</div><h1>Votre document est prêt</h1><p class="lead">Vérifiez le récapitulatif puis récupérez votre document corrigé.</p></div></div>
+  <div class="card result-card">
+   <div class="result-intro"><div class="result-check">✓</div><h2 id="resultTitle">Export terminé</h2><p class="lead" style="margin:auto" id="resultSubtitle">Seules les corrections que vous avez acceptées ont été appliquées au document.</p></div>
+   <div class="result-stats">
+    <div class="result-stat"><strong id="resultApplied" style="color:#287b53">0</strong><span>Corrections appliquées</span></div>
+    <div class="result-stat"><strong id="resultSkipped">0</strong><span>Non retenues</span></div>
+    <div class="result-stat"><strong id="resultRejected" style="color:#95601b">0</strong><span>Non applicables</span></div>
+   </div>
+   <div class="info" id="rejectedInfo" hidden style="margin:0"></div>
+   <div class="download-row"><div class="file-icon">DOCX</div><div><strong id="downloadName">document_corrige.docx</strong><small>Document Word avec les corrections acceptées</small></div><span class="status green">Prêt</span></div>
+   <button class="btn btn-primary" style="width:100%" id="downloadBtn">↓ Télécharger le document corrigé</button>
+   <button class="btn btn-secondary" style="width:100%;margin-top:9px" id="summaryBtn">Télécharger le récapitulatif des décisions (CSV)</button>
+   <p class="fineprint" style="text-align:center;margin:15px 0 0">Votre document d'origine n'est jamais modifié : le fichier corrigé est une copie.</p>
+   <div style="display:flex;justify-content:center;gap:8px;margin-top:18px">
+    <button class="btn btn-quiet" data-go="documents">← Mes documents</button>
+    <button class="btn btn-quiet" data-go="review">Revoir les décisions</button>
+   </div>
+  </div>
+ </section>
+</main>
+<footer><div class="foot-inner"><span><strong style="color:#52677b">Corrigeo</strong> · Assistant de relecture documentaire</span><span>Traitement local · votre texte ne quitte pas cette machine</span></div></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="assets/app.js"></script>
+</body>
+</html>

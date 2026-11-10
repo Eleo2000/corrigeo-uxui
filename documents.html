@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Corrigeo — Mes documents</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="index.html" aria-label="Corrigeo, accueil"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7.5A8 8 0 1 0 20 14"/><path d="m14 11 3 3 5-6"/></svg></span><span class="brand-name">corri<span>geo</span></span></a>
+      <nav class="main-nav" aria-label="Navigation principale"><a href="index.html">Accueil</a><a class="active" href="documents.html">Mes documents</a></nav>
+      <span class="demo-label"><i class="demo-dot"></i> Connecté au serveur local</span>
+    </div>
+  </header>
+
+  <main id="contenu" class="container" data-documents-page>
+    <section class="documents-intro">
+      <div>
+        <span class="eyebrow">Votre espace</span>
+        <h1>Mes documents</h1>
+        <p class="muted">Retrouvez votre relecture et reprenez-la quand vous le souhaitez.</p>
+      </div>
+      <a class="button button-primary" href="index.html">＋ Ajouter un document</a>
+    </section>
+
+    <article class="document-entry">
+      <span class="file-icon">DOCX</span>
+      <div class="document-entry-info">
+        <strong data-file-name>Mémoire universitaire — exemple.docx</strong>
+        <span data-document-summary>…</span>
+      </div>
+      <span class="document-entry-status" data-document-status>À commencer</span>
+      <a class="button button-secondary" data-document-action href="analyse.html">Voir l’analyse</a>
+    </article>
+
+    <div class="documents-empty-note">
+      <strong>À savoir :</strong> la relecture en cours est conservée sur le serveur local. Vous pouvez fermer cette page et reprendre plus tard.
+    </div>
+  </main>
+
+  <footer class="footer"><div class="container footer-inner"><span><strong>Corrigeo</strong> · Assistant de relecture documentaire</span><span>Maquette de présentation · Contenu fictif</span></div></footer>
+  <script src="assets/app.js"></script>
+</body>
+</html>

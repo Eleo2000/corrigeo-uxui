@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Corrigeo — Propositions trouvées</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="index.html" aria-label="Corrigeo, accueil"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7.5A8 8 0 1 0 20 14"/><path d="m14 11 3 3 5-6"/></svg></span><span class="brand-name">corri<span>geo</span></span></a>
+      <nav class="main-nav" aria-label="Navigation principale"><a href="index.html">Accueil</a><a class="active" href="documents.html">Mes documents</a></nav>
+      <span class="demo-label"><i class="demo-dot"></i> Connecté au serveur local</span>
+    </div>
+  </header>
+
+  <main id="contenu" class="container" data-analysis-page>
+    <nav class="workflow" aria-label="Étapes de relecture">
+      <span class="workflow-step done" data-step="1"><i class="step-circle">✓</i> Document</span><i class="workflow-line"></i>
+      <span class="workflow-step active" data-step="2"><i class="step-circle">2</i> Vérification</span><i class="workflow-line"></i>
+      <span class="workflow-step" data-step="3"><i class="step-circle">3</i> Récapitulatif</span>
+    </nav>
+
+    <div class="page-heading">
+      <div>
+        <span class="eyebrow">Votre document</span>
+        <h1>Analyse du document</h1>
+        <p>Corrigeo a repéré des passages qui pourraient être améliorés. <strong>Rien n’a été modifié.</strong> C’est à vous de choisir.</p>
+      </div>
+      <div class="file-chip"><span class="file-icon">DOCX</span><span><strong data-file-name>Mémoire universitaire — exemple.docx</strong><small>Document Word</small></span></div>
+    </div>
+
+    <section class="panel analysis-panel">
+      <div class="analysis-main">
+        <h2>Voici ce qui mérite votre attention</h2>
+        <p>Les propositions portent sur l’écriture des mots, les accords et la ponctuation. Vous pourrez lire chaque phrase et son explication avant de décider.</p>
+        <div class="analysis-total"><strong data-analysis-total>–</strong><span>propositions trouvées<br><small class="analysis-subline">dans votre document</small></span></div>
+        <ul class="kind-list" aria-label="Types de propositions" data-kind-list></ul>
+      </div>
+      <aside class="analysis-side">
+        <div>
+          <h3>Avant de commencer</h3>
+          <ul>
+            <li><i class="check-icon">✓</i><span>Vous verrez toujours votre phrase d’origine.</span></li>
+            <li><i class="check-icon">✓</i><span>Chaque proposition sera accompagnée d’une explication.</span></li>
+            <li><i class="check-icon">✓</i><span>Vous pourrez garder votre texte sans appliquer la suggestion.</span></li>
+          </ul>
+        </div>
+        <a class="button button-primary" href="revision.html" data-review-link>Voir les propositions <span aria-hidden="true">→</span></a>
+      </aside>
+    </section>
+
+    <div class="notice"><strong>Analyse locale :</strong> les propositions affichées proviennent du contenu réel de votre document, analysé par LanguageTool sur votre machine. Aucun texte n’est envoyé à un service extérieur.</div>
+  </main>
+
+  <footer class="footer"><div class="container footer-inner"><span><strong>Corrigeo</strong> · Assistant de relecture documentaire</span><span>Maquette de présentation · Contenu fictif</span></div></footer>
+  <script src="assets/app.js"></script>
+</body>
+</html>
