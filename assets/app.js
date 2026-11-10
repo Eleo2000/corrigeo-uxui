@@ -11,6 +11,7 @@ const state = {
   docId: null,
   filename: null,
   proposals: [],          // [{id,title,category,original,suggestion,before,after,explanation,location,decision}]
+  segments: [],           // [{index,label,page,text}] pour l'aperçu document
   decisions: {},          // id -> chosen|kept (pending = absent)
   statusFilter: "all",
   categoryFilter: "all",
@@ -41,6 +42,17 @@ function ws(escaped) {
     : ch === "\u00a0" ? '<span class="glyph">\u233d</span>'
     : '<span class="glyph">\u21e5</span>');
 }
+
+/* True si la proposition touche espaces/insécables/tabs : les glyphes ␣⍽⇥
+   sont alors utiles. Sinon le texte s'affiche normalement (lisible). */
+function needsGlyph(p) {
+  const norm = (s) => (s || "").replace(/\s/g, "");
+  if (norm(p.original) === norm(p.suggestion)) return true;   // diff = espaces seuls
+  return /[\u00a0\u202f\t]/.test(p.original) || /[\u00a0\u202f\t]/.test(p.suggestion);
+}
+
+/* ws() ou esc() selon le besoin — jamais de glyphes partout dans le texte. */
+const show = (p, s) => (needsGlyph(p) ? ws(esc(s)) : esc(s));
 
 async function api(path, opts = {}) {
   const res = await fetch("/api" + path, opts);
@@ -226,6 +238,15 @@ async function fetchProposals() {
   return data;
 }
 
+async function fetchPreview() {
+  try {
+    const data = await getJSON(`/documents/${state.docId}/preview`);
+    state.segments = data.segments;
+  } catch (_) {
+    state.segments = [];   // aperçu facultatif : la relecture reste utilisable
+  }
+}
+
 /* ---------- page review ---------- */
 const decisionOf = (p) => state.decisions[p.id] || "pending";
 const visible = () => state.proposals.filter((p) =>
@@ -270,12 +291,123 @@ function buildCategoryFilters() {
   }));
 }
 
+/* ---------- aperçu document (panneau gauche) ---------- */
+function renderPreview() {
+  const box = $("#docPreview");
+  if (!state.segments.length) {
+    box.innerHTML = `<div class="empty" style="padding:30px 14px"><p class="fineprint">Aperçu indisponible pour ce document.</p></div>`;
+    return;
+  }
+  const bySeg = {};
+  state.proposals.forEach((p) => {
+    (bySeg[p.location.segment] = bySeg[p.location.segment] || []).push(p);
+  });
+  box.innerHTML = state.segments.map((seg) => {
+    const props = (bySeg[seg.index] || []).sort((a, b) => a.location.offset - b.location.offset);
+    let html = "", pos = 0;
+    for (const p of props) {
+      let start = p.location.offset, end = start + p.original.length;
+      if (seg.text.slice(start, end) !== p.original) {          // ancre côté rendu
+        start = seg.text.indexOf(p.original, start);
+        if (start === -1) continue;
+        end = start + p.original.length;
+      }
+      if (start < pos) continue;                                 // sécurité : pas de chevauchement
+      html += esc(seg.text.slice(pos, start));
+      html += `<mark class="prop ${decisionOf(p)}" data-pid="${esc(p.id)}">${show(p, seg.text.slice(start, end))}</mark>`;
+      pos = end;
+    }
+    html += esc(seg.text.slice(pos));
+    return `<div class="doc-para"><span class="doc-para-label">${esc(seg.label)}</span>${html}</div>`;
+  }).join("");
+  box.querySelectorAll("mark.prop").forEach((m) => m.addEventListener("click", () => {
+    const idx = state.proposals.findIndex((p) => p.id === m.dataset.pid);
+    if (idx !== -1) { state.current = idx; renderProposal(); }
+  }));
+}
+
+function syncPreviewMark(pid) {
+  const m = document.querySelector(`mark[data-pid="${CSS.escape(pid)}"]`);
+  if (m) m.className = "prop " + (state.decisions[pid] || "pending");
+}
+
+function scrollPreviewTo(pid) {
+  const box = $("#docPreview");
+  const m = box.querySelector(`mark[data-pid="${CSS.escape(pid)}"]`);
+  $$("#docPreview mark.prop.active").forEach((x) => x.classList.remove("active"));
+  if (!m) return;
+  m.classList.add("active");
+  // position mesurée en viewport : robuste quel que soit le flux
+  box.scrollTop = m.getBoundingClientRect().top - box.getBoundingClientRect().top
+    + box.scrollTop - box.clientHeight / 3;
+}
+
+/* Garder ce mot dans tout le document : toutes les propositions portant le
+   même extrait original (insensible à la casse) passent à 'kept'. */
+async function ignoreWord(p) {
+  const word = p.original.trim().toLowerCase();
+  const targets = state.proposals.filter(
+    (x) => x.original.trim().toLowerCase() === word && decisionOf(x) === "pending"
+  );
+  if (!targets.length) return;
+  if (!confirm(`Conserver « ${p.original.trim()} » partout dans le document ?\n${targets.length} proposition(s) en attente seront marquées « conservées ».`)) return;
+  const all = {};
+  targets.forEach((x) => { all[x.id] = "kept"; });
+  try {
+    await postJSON(`/documents/${state.docId}/decisions`, { decisions: all });
+    targets.forEach((x) => { state.decisions[x.id] = "kept"; x.decision = "kept"; syncPreviewMark(x.id); });
+    state.exportInfo = null;
+    toast(`${targets.length} occurrence(s) de « ${p.original.trim()} » conservée(s).`);
+    buildGroups();
+    renderProposal();
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------- groupes de corrections identiques ---------- */
+function buildGroups() {
+  const groups = {};
+  state.proposals.forEach((p) => {
+    const key = p.title;
+    (groups[key] = groups[key] || []).push(p);
+  });
+  const top = Object.entries(groups).filter(([, l]) => l.length > 1).sort((a, b) => b[1].length - a[1].length).slice(0, 5);
+  const box = $("#groupFilters");
+  if (!top.length) { box.innerHTML = `<span class="fineprint" style="padding:0 10px">Aucun groupe répétitif.</span>`; return; }
+  box.innerHTML = "";
+  top.forEach(([title, list]) => {
+    const pending = list.filter((p) => decisionOf(p) === "pending").length;
+    const btn = document.createElement("button");
+    btn.className = "group-btn";
+    btn.innerHTML = `<strong>${esc(title.length > 34 ? title.slice(0, 33) + "…" : title)}</strong><small>×${list.length}${pending ? "" : " ✓"}</small>`;
+    btn.title = "Accepter les " + pending + " occurrences en attente de « " + title + " »";
+    btn.addEventListener("click", async () => {
+      const targets = list.filter((p) => decisionOf(p) === "pending");
+      if (!targets.length) { toast("Toutes les occurrences de ce groupe sont déjà traitées."); return; }
+      if (!confirm(`Accepter les ${targets.length} occurrences en attente de\n« ${title} » ?`)) return;
+      const all = {};
+      targets.forEach((p) => { all[p.id] = "chosen"; });
+      try {
+        await postJSON(`/documents/${state.docId}/decisions`, { decisions: all });
+        targets.forEach((p) => { state.decisions[p.id] = "chosen"; p.decision = "chosen"; syncPreviewMark(p.id); });
+        state.exportInfo = null;
+        toast(targets.length + " occurrence(s) acceptée(s).");
+        buildGroups();
+        renderProposal();
+      } catch (e) { toast(e.message); }
+    });
+    box.appendChild(btn);
+  });
+}
+
 async function enterReview() {
   $("#reviewFilename").textContent = state.filename || "document.docx";
   if (!state.loaded) {
     try { await fetchProposals(); } catch (e) { toast(e.message); go("upload"); return; }
   }
+  await fetchPreview();
   buildCategoryFilters();
+  buildGroups();
+  renderPreview();
   // reprendre là où en est la première proposition non traitée
   const firstPending = state.proposals.findIndex((p) => decisionOf(p) === "pending");
   if (state.current >= state.proposals.length || decisionOf(state.proposals[state.current]) !== "pending") {
@@ -284,12 +416,7 @@ async function enterReview() {
   renderProposal();
 }
 
-function contextHTML(p, suggested) {
-  const mid = suggested
-    ? `<span class="good-word">${ws(esc(p.suggestion))}</span>`
-    : `<span class="bad-word">${ws(esc(p.original))}</span>`;
-  return ws(esc(p.before)) + mid + ws(esc(p.after));
-}
+const pageOf = (p) => (state.segments[p.location.segment] || {}).page ?? null;
 
 function renderProposal() {
   const view = visible();
@@ -299,6 +426,8 @@ function renderProposal() {
     card.innerHTML = `<div class="empty"><div class="empty-icon">✓</div><h3>Aucune proposition</h3><p>Le moteur n'a détecté aucune correction à proposer dans ce document.</p><button class="btn btn-primary" id="goExportEmpty">Exporter le document →</button></div>`;
     $("#navPosition").textContent = "";
     $("#prevBtn").disabled = $("#nextBtn").disabled = true;
+    $("#nextPageBtn").hidden = true;
+    $(".action-bar").hidden = true;
     $("#goExportEmpty").addEventListener("click", doExport);
     return;
   }
@@ -306,6 +435,8 @@ function renderProposal() {
     card.innerHTML = `<div class="empty"><div class="empty-icon">⌕</div><h3>Aucune proposition dans cette vue</h3><p>Modifiez les filtres pour afficher d'autres propositions.</p><button class="btn btn-secondary" id="resetFiltersBtn">Réinitialiser les filtres</button></div>`;
     $("#navPosition").textContent = "Aucun résultat";
     $("#prevBtn").disabled = $("#nextBtn").disabled = true;
+    $("#nextPageBtn").hidden = true;
+    $(".action-bar").hidden = true;
     $("#resetFiltersBtn").addEventListener("click", resetFilters);
     return;
   }
@@ -315,32 +446,44 @@ function renderProposal() {
   const p = state.proposals[state.current];
   const d = decisionOf(p);
   const idx = view.indexOf(p);
+  const page = pageOf(p);
+  // même mot ailleurs en attente -> proposer "ignorer partout"
+  const sameWord = state.proposals.filter(
+    (x) => x !== p && x.original.trim().toLowerCase() === p.original.trim().toLowerCase() && decisionOf(x) === "pending"
+  );
   card.innerHTML = `
    <div class="proposal-top"><span class="category">${esc(p.category).toUpperCase()}</span><span class="proposal-position">${esc(p.location.label)}</span></div>
-   <h3 class="proposal-title">${ws(esc(p.title))}</h3>
-   <div class="diff-label">EXTRAIT ORIGINAL</div>
-   <div class="proposal-context">${contextHTML(p, false)}</div>
-   <div class="diff-label">SUGGESTION PROPOSÉE</div>
-   <div class="proposal-context" style="border-left-color:#b9ddc7">${contextHTML(p, true)}</div>
+   <div class="diff-inline"><del>${show(p, p.original)}</del><span class="arrow">→</span><ins>${show(p, p.suggestion)}</ins></div>
+   <div class="ctx-line">${esc(p.before)}<b>${show(p, p.original)}</b>${esc(p.after)}</div>
    <div class="explanation"><strong>Pourquoi cette suggestion ?</strong>${esc(p.explanation)}</div>
+   ${needsGlyph(p) ? '<div class="ctx-note">␣ = espace · ⍽ = espace insécable · ⇥ = tabulation</div>' : ""}
    <div class="proposal-footer">
-    <span class="left">${d === "pending" ? "Aucune décision enregistrée pour cette proposition." : d === "chosen" ? "Correction acceptée — sera appliquée à l'export." : "Texte original conservé — ne sera pas modifié."}</span>
-    <div class="proposal-actions">
-     <button class="btn btn-secondary" id="keepBtn">${d === "kept" ? "Texte conservé ✓" : "Garder mon texte"}</button>
-     <button class="btn btn-green" id="acceptBtn">${d === "chosen" ? "Correction acceptée ✓" : "Accepter la correction"}</button>
-    </div>
+    <span class="left">${d === "pending" ? "Aucune décision enregistrée." : d === "chosen" ? "Acceptée — sera appliquée à l'export." : "Conservée — texte inchangé."}</span>
    </div>`;
-  $("#keepBtn").addEventListener("click", () => decide(p, "kept"));
-  $("#acceptBtn").addEventListener("click", () => decide(p, "chosen"));
-  $("#navPosition").textContent = (idx + 1) + " sur " + view.length + " · proposition " + (state.proposals.indexOf(p) + 1) + "/" + state.proposals.length;
+  // boutons fixes : on ne met à jour que leurs libellés/visibilités (position stable)
+  $(".action-bar").hidden = false;
+  $("#keepBtn").textContent = d === "kept" ? "Conservé ✓" : "Garder";
+  $("#acceptBtn").textContent = d === "chosen" ? "Acceptée ✓" : "Accepter";
+  const iw = $("#ignoreWordBtn");
+  iw.hidden = sameWord.length === 0;
+  if (sameWord.length) iw.textContent = `Ignorer partout (×${sameWord.length + (d === "pending" ? 1 : 0)})`;
+  $("#navPosition").textContent = (idx + 1) + " / " + view.length;
   $("#prevBtn").disabled = idx <= 0;
   $("#nextBtn").disabled = idx >= view.length - 1;
+  // navigation par page : prochaine page contenant une erreur en attente
+  const nextPage = state.proposals.find(
+    (x) => decisionOf(x) === "pending" && pageOf(x) !== null && page !== null && pageOf(x) > page
+  );
+  $("#nextPageBtn").hidden = !nextPage;
+  if (nextPage) $("#nextPageBtn").textContent = `⇥ Page ~${pageOf(nextPage)} suivante`;
+  scrollPreviewTo(p.id);
 }
 
 async function decide(p, value) {
   const prev = state.decisions[p.id];
   state.decisions[p.id] = value;
   p.decision = value;
+  syncPreviewMark(p.id);
   updateCounts();
   renderProposal();
   try {
@@ -377,6 +520,18 @@ function move(delta) {
 }
 $("#prevBtn").addEventListener("click", () => move(-1));
 $("#nextBtn").addEventListener("click", () => move(1));
+/* boutons fixes, liés une seule fois : agissent toujours sur la proposition courante */
+$("#keepBtn").addEventListener("click", () => { const p = state.proposals[state.current]; if (p) decide(p, "kept"); });
+$("#acceptBtn").addEventListener("click", () => { const p = state.proposals[state.current]; if (p) decide(p, "chosen"); });
+$("#ignoreWordBtn").addEventListener("click", () => { const p = state.proposals[state.current]; if (p) ignoreWord(p); });
+$("#nextPageBtn").addEventListener("click", () => {
+  const cur = pageOf(state.proposals[state.current]);
+  const next = state.proposals.find(
+    (x) => decisionOf(x) === "pending" && pageOf(x) !== null && cur !== null && pageOf(x) > cur
+  );
+  if (next) { state.current = state.proposals.indexOf(next); renderProposal(); }
+  else toast("Plus d'erreur en attente sur les pages suivantes.");
+});
 
 function resetFilters() {
   state.statusFilter = "all"; state.categoryFilter = "all";
@@ -400,9 +555,10 @@ $("#bulkBtn").addEventListener("click", async () => {
   targets.forEach((p) => { all[p.id] = "chosen"; });
   try {
     await postJSON(`/documents/${state.docId}/decisions`, { decisions: all });
-    targets.forEach((p) => { state.decisions[p.id] = "chosen"; p.decision = "chosen"; });
+    targets.forEach((p) => { state.decisions[p.id] = "chosen"; p.decision = "chosen"; syncPreviewMark(p.id); });
     state.exportInfo = null;
     toast(targets.length + " proposition(s) acceptée(s).");
+    buildGroups();
     renderProposal();
   } catch (e) { toast(e.message); }
 });

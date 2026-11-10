@@ -63,6 +63,9 @@
      <label class="mode-card"><input type="radio" name="mode" value="auto">
       <div><strong>Correction automatique</strong><span>Toutes les suggestions du moteur sont appliquées d'un coup. Vous pourrez toujours les revoir en relecture et ré-exporter.</span></div>
      </label>
+     <label class="mode-card mode-disabled"><input type="radio" name="mode" value="llm" disabled>
+      <div><strong>Analyse contextuelle (IA)</strong><span>Suggestions de fond et de style via un modèle de langage — nécessite une clé API configurée côté serveur (CORRIGEO_OPENAI_KEY).</span></div>
+     </label>
     </div>
     <div class="upload-actions"><span class="fineprint">Format .docx · 25 Mo maximum</span><button class="btn btn-primary" id="analyzeBtn" disabled>Lancer l'analyse →</button></div>
     <div class="analysis" id="analysis">
@@ -102,10 +105,19 @@
     <div class="filter-list" id="categoryFilters">
      <button class="filter-btn active" data-category="all">Toutes les catégories</button>
     </div>
+    <div class="filter-title">CORRECTIONS IDENTIQUES</div>
+    <div class="filter-list" id="groupFilters"></div>
    </aside>
-   <div>
-    <article class="card proposal" id="proposalCard"></article>
+   <div class="card doc-preview" id="docPreview"></div>
+   <div class="review-side">
+    <article class="card proposal proposal-slim" id="proposalCard"></article>
+    <div class="action-bar">
+     <button class="btn btn-quiet" id="ignoreWordBtn" hidden title="Conserver ce mot dans tout le document">Ignorer partout</button>
+     <button class="btn btn-secondary" id="keepBtn">Garder</button>
+     <button class="btn btn-green" id="acceptBtn">Accepter</button>
+    </div>
     <div class="proposal-nav"><button class="btn btn-quiet" id="prevBtn">← Précédente</button><span class="fineprint" id="navPosition"></span><button class="btn btn-quiet" id="nextBtn">Suivante →</button></div>
+    <button class="btn btn-quiet" id="nextPageBtn" hidden>⇥ Page suivante avec erreurs</button>
    </div>
   </div>
  </section>
